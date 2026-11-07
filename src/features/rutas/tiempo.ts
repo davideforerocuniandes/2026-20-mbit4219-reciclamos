@@ -89,7 +89,10 @@ export function hora(minutos: number): string {
 }
 
 export function textoVentana(v: Ventana): string {
-  return `entre ${hora(v.desde).replace(/ (a|p)\. m\.$/, "")} y ${hora(v.hasta)}`;
+  const desde = hora(v.desde);
+  const hasta = hora(v.hasta);
+  const compartenSufijo = desde.slice(-5) === hasta.slice(-5);
+  return `entre ${compartenSufijo ? desde.slice(0, -6) : desde} y ${hasta}`;
 }
 
 /** «hoy», «mañana» o «el jueves 12 de noviembre», relativo a `hoy`. */

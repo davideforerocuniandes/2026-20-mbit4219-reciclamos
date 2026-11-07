@@ -28,9 +28,9 @@ flowchart LR
 
 1. `leerDireccion` normaliza el texto (tildes, mayúsculas, «No.», «№», abreviaturas) y lo interpreta con la nomenclatura de Bogotá: tipo de vía, números, letras, «Bis», cuadrante Sur o Este y placa.
 2. La dirección se convierte en un punto de la malla vial: calles hacia el norte (Sur negativo) y carreras hacia el occidente (Este negativo).
-3. `ubicarEnZona` ubica el punto en una zona aproximada (o en la más cercana). `rutasEn` filtra las rutas cuya cobertura lo contiene.
+3. `ubicarEnZona` ubica el punto en una zona aproximada y señala si tuvo que ajustarlo a la más cercana. `rutasEn` filtra las rutas cuya cobertura lo contiene.
 4. `proximaRecoleccion` calcula, en hora de Bogotá (UTC−5, sin horario de verano), el próximo día de paso de cada ruta. Si la ruta pasa hoy y la ventana ya terminó, salta al siguiente.
-5. El resultado es una unión discriminada: `error-direccion`, `sin-ruta` o `con-ruta`. Un punto que cae entre zonas se asigna a la más cercana, para que cualquier dirección de Bogotá reciba resultado. Cada estado tiene su pantalla.
+5. El resultado es una unión discriminada: `error-direccion`, `sin-ruta` o `con-ruta`. Si el punto se ajustó a otra zona, la interfaz identifica el resultado como referencia y omite avisos y reportes para esa cuadra.
 
 ## Cómo se articula con la SuperApp en producción
 

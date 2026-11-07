@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Cabecera, Tarjeta } from "@/components/ui";
+import { ChevronDown, LockKeyhole, MapPin, Users } from "lucide-react";
+import { Cabecera, EnlaceBoton, Tarjeta } from "@/components/ui";
 import { RUTAS } from "@/features/rutas/datos";
 import { ZONAS } from "@/features/territorio/zonas";
 
@@ -7,83 +8,85 @@ export const metadata: Metadata = { title: "Sobre el prototipo" };
 
 const REPOSITORIO = "https://github.com/davideforerocuniandes/2026-20-mbit4219-reciclamos";
 
-const REAL_SIMULADO = [
-  ["Lectura de direcciones de Bogotá (Calle, Carrera, Diagonal, Transversal, Avenida, Sur, Este, Bis)", "Real: funciona con cualquier dirección bien escrita."],
-  ["Ubicación de la cuadra y la localidad", "Simulada con zonas aproximadas sobre la malla vial. En producción: geocodificador de IDECA."],
-  ["Rutas, organizaciones y horarios", "Ficticios. En producción: microrrutas registradas en el SUI y validadas por la UAESP."],
-  ["Próxima recolección y hora del aviso", "Reales: se calculan con la hora de Bogotá (UTC−5)."],
-  ["Aviso de la noche anterior", "Simulado: vista previa en pantalla. En producción: notificación de la SuperApp."],
-  ["Reportes y respuestas", "Guardados solo en este navegador. En producción: herramienta web y WhatsApp de la organización."],
-] as const;
-
 export default function Acerca() {
-  const pilotos = ZONAS.filter((z) => RUTAS.some((r) => r.zonaId === z.id)).map((z) => z.nombre);
+  const zonasConRutas = ZONAS.filter((zona) => RUTAS.some((ruta) => ruta.zonaId === zona.id));
+
   return (
     <>
       <Cabecera
-        antetitulo="MBIT 4219 · Universidad de los Andes · 2026-20"
+        antetitulo="Propuesta para la Bogotá SuperApp"
         titulo="Sobre el prototipo"
-        descripcion="Reciclamos es una propuesta académica de transformación digital: una función de la Bogotá SuperApp que le dice a cada hogar qué día y a qué hora sacar la bolsa blanca para que llegue a un reciclador y no al camión de la basura."
+        descripcion="Reciclamos es un proyecto académico para mostrar cuándo sacar la bolsa blanca y entregarla a quien recoge el reciclaje."
       />
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-        <Tarjeta aria-labelledby="titulo-real">
-          <h2 id="titulo-real" className="text-lg font-bold">
-            Qué es real y qué es simulado
-          </h2>
-          <dl className="mt-3 divide-y divide-borde">
-            {REAL_SIMULADO.map(([que, como]) => (
-              <div key={que} className="py-3 first:pt-0 last:pb-0">
-                <dt className="font-semibold">{que}</dt>
-                <dd className="text-sm text-gris">{como}</dd>
-              </div>
-            ))}
-          </dl>
-        </Tarjeta>
+      <div className="@container space-y-4">
+        <section aria-labelledby="titulo-probar" className="rounded-tarjeta bg-amarillo-50 p-5 wrap-anywhere sm:p-6">
+          <h2 id="titulo-probar" className="text-lg font-bold">Qué puedes probar</h2>
+          <p className="mt-2 max-w-2xl text-gris">
+            Consulta un horario, mira cómo se vería el aviso de la noche anterior y practica cómo guardar y responder un reporte.
+            Las rutas, los horarios y las organizaciones son ficticios.
+          </p>
+          <EnlaceBoton href="/reciclaje?ejemplo=bosa" variante="destacada" className="mt-4">Probar con un ejemplo</EnlaceBoton>
+        </section>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 items-start gap-4 @min-[44rem]:grid-cols-2">
           <Tarjeta aria-labelledby="titulo-privacidad">
-            <h2 id="titulo-privacidad" className="text-lg font-bold">
-              Privacidad por diseño
+            <h2 id="titulo-privacidad" className="flex items-center gap-2 text-lg font-bold">
+              <LockKeyhole aria-hidden className="size-5 shrink-0 text-acento" /> Tu dirección y tus datos
             </h2>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-[0.95rem]">
-              <li>La consulta no guarda tu dirección ni la envía a ningún servidor.</li>
-              <li>El aviso guarda solo la cuadra, con tu autorización (Ley 1581 de 2012), y puedes cancelarlo.</li>
-              <li>Los reportes se asocian a la cuadra, no a la dirección.</li>
-              <li>Los enlaces de ejemplo llevan un identificador, nunca una dirección.</li>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-gris">
+              <li>Usamos tu dirección en este navegador para calcular un horario de prueba.</li>
+              <li>Si eliges usar tu ubicación, la app estima tu zona en este navegador. Las coordenadas quedan fuera de los datos guardados.</li>
+              <li>Los avisos y reportes guardan la cuadra en lugar de la dirección completa.</li>
+              <li>Puedes cancelar el aviso y borrar lo guardado desde «Mis avisos».</li>
             </ul>
+            <EnlaceBoton href="/mis-avisos#titulo-tus-datos" variante="sutil" className="mt-2 underline underline-offset-4">Gestionar mis datos</EnlaceBoton>
           </Tarjeta>
 
           <Tarjeta aria-labelledby="titulo-cobertura">
-            <h2 id="titulo-cobertura" className="text-lg font-bold">
-              Cobertura del prototipo
+            <h2 id="titulo-cobertura" className="flex items-center gap-2 text-lg font-bold">
+              <MapPin aria-hidden className="size-5 shrink-0 text-acento" /> Cobertura de prueba
             </h2>
-            <p className="mt-2 text-[0.95rem]">Localidades con rutas de prueba: {pilotos.join(", ")}.</p>
-            <p className="mt-1 text-sm text-gris">
-              Cualquier dirección urbana de Bogotá recibe un horario de prueba de la localidad más cercana. Un sector pequeño de Kennedy muestra el
-              mensaje «todavía no hay ruta registrada», tal como haría la función real donde no hay organizaciones con rutas verificadas.
+            <p className="mt-3 text-gris">
+              El catálogo tiene ejemplos para {zonasConRutas.map((zona) => zona.nombre).join(", ")}.
+              Si la dirección queda fuera de esas zonas, puedes ver un horario de referencia de una zona cercana.
             </p>
-          </Tarjeta>
-
-          <Tarjeta aria-labelledby="titulo-equipo">
-            <h2 id="titulo-equipo" className="text-lg font-bold">
-              Equipo
-            </h2>
-            <p className="mt-2 text-[0.95rem]">
-              David Alejandro Abril Medina, Paula Andrea Cañon Camelo, David Elias Forero Cobos y Maria Paulina Ocampo Peralta. Profesor: Javier
-              Orlando Torres Páez.
-            </p>
-            <p className="mt-2 text-sm">
-              <a href={REPOSITORIO} className="font-semibold text-verde-700 underline underline-offset-4" rel="noopener noreferrer">
-                Código fuente en GitHub
-              </a>
-            </p>
+            <p className="mt-2 text-gris">Un ejemplo de Kennedy permite probar el caso de una cuadra sin ruta.</p>
           </Tarjeta>
         </div>
+
+        <details className="group rounded-tarjeta border border-borde bg-white">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 rounded-tarjeta px-4 py-3 font-semibold text-acento [&::-webkit-details-marker]:hidden">
+            Cómo se conectaría con la SuperApp
+            <ChevronDown aria-hidden className="ml-auto size-5 shrink-0 group-open:rotate-180" />
+          </summary>
+          <ul className="space-y-2 border-t border-borde px-6 py-4 pl-9 text-gris">
+            <li className="list-disc">IDECA serviría para ubicar las direcciones.</li>
+            <li className="list-disc">Los horarios vendrían de las rutas registradas y validadas.</li>
+            <li className="list-disc">La SuperApp enviaría los avisos y conectaría los reportes con las organizaciones.</li>
+          </ul>
+        </details>
+
+        <Tarjeta aria-labelledby="titulo-equipo">
+          <h2 id="titulo-equipo" className="flex items-center gap-2 text-lg font-bold">
+            <Users aria-hidden className="size-5 shrink-0 text-acento" /> Equipo
+          </h2>
+          <p className="mt-2 text-gris">MBIT 4219 · Universidad de los Andes · Grupo 2 · 2026-20</p>
+          <p className="mt-2">
+            David Alejandro Abril Medina, Paula Andrea Cañon Camelo, David Elias Forero Cobos y Maria Paulina Ocampo Peralta.
+            Profesor: Javier Orlando Torres Páez.
+          </p>
+          <a href={REPOSITORIO} className="mt-1 inline-flex min-h-11 items-center font-semibold text-acento underline underline-offset-4">Código fuente en GitHub</a>
+          <p className="mt-3 border-t border-borde pt-3 text-sm text-gris">
+            Foto de Inicio:{" "}
+            <a href="https://commons.wikimedia.org/wiki/File:Dan-gold-bogota-city-night-montserrate.jpg" className="font-semibold text-acento underline underline-offset-4">
+              Bogotá desde Monserrate, de Danielcgold
+            </a>
+            {" "}·{" "}
+            <a href="https://creativecommons.org/licenses/by-sa/4.0/" className="font-semibold text-acento underline underline-offset-4">CC BY-SA 4.0</a>.
+            Versión optimizada en WebP y recortada para el banner.
+          </p>
+        </Tarjeta>
       </div>
-      <p className="mt-6 max-w-3xl text-sm text-gris">
-        No es un servicio oficial de la Alcaldía de Bogotá ni de la UAESP. Los nombres de organizaciones son ficticios y no representan a organizaciones
-        reales de recicladores.
-      </p>
     </>
   );
 }

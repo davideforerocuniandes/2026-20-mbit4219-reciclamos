@@ -10,9 +10,11 @@ export async function fijarHora(page: Page, instante = LUNES_8AM) {
 
 /** Consulta una dirección escribiéndola en el campo, como lo haría una persona. */
 export async function consultar(page: Page, direccion: string) {
+  const cambiar = page.getByRole("button", { name: "Cambiar dirección" });
+  if (await cambiar.isVisible()) await cambiar.click();
   const campo = page.getByLabel("Dirección", { exact: true });
   await campo.fill(direccion);
-  await page.getByRole("button", { name: "Consultar" }).click();
+  await page.getByRole("button", { name: "Consultar horario", exact: true }).click();
 }
 
 export async function sinViolacionesDeAccesibilidad(page: Page) {
@@ -23,13 +25,17 @@ export async function sinViolacionesDeAccesibilidad(page: Page) {
 
 /** Ningún elemento debe obligar a desplazarse horizontalmente. */
 export async function sinDesbordeHorizontal(page: Page) {
-  const { ancho, contenido } = await page.evaluate(() => ({
-    ancho: window.innerWidth,
-    contenido: document.documentElement.scrollWidth,
-  }));
-  expect(contenido, `el contenido mide ${contenido}px en una ventana de ${ancho}px`).toBeLessThanOrEqual(ancho);
-}
-
-export function esTelefono(page: Page): boolean {
-  return (page.viewportSize()?.width ?? 1440) < 1024;
+  const { ancho, contenido, desbordados } = await page.evaluate(() => {
+    const ancho = window.innerWidth;
+    const contenido = document.documentElement.scrollWidth;
+    const desbordados = contenido > ancho
+      ? Array.from(document.querySelectorAll("body *"))
+        .filter((nodo) => nodo.getBoundingClientRect().right > ancho + 1)
+        .slice(0, 5)
+        .map((nodo) => nodo.outerHTML.slice(0, 180))
+      : [];
+    return { ancho, contenido, desbordados };
+  });
+  expect(contenido, `el contenido mide ${contenido}px en una ventana de ${ancho}px
+${desbordados.join("\n")}`).toBeLessThanOrEqual(ancho);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { CircleCheck, Inbox, MapPin, Send } from "lucide-react";
 import { Boton, Etiqueta, Nota, Tarjeta } from "@/components/ui";
 import { useAlmacen, useHidratado } from "@/lib/almacen";
@@ -26,11 +26,11 @@ export function HerramientaOrganizaciones() {
   const rutas = RUTAS.filter((r) => r.organizacionId === org.id);
   const reportes = (hidratado ? [...locales, ...REPORTES_DEMO] : [...REPORTES_DEMO])
     .filter((r) => r.organizacionId === org.id)
-    .sort((a, b) => b.creadoEl.localeCompare(a.creadoEl));
+    .sort((a, b) => Number(Boolean(respuestas[a.id])) - Number(Boolean(respuestas[b.id])) || b.creadoEl.localeCompare(a.creadoEl));
   const respondidos = reportes.filter((r) => respuestas[r.id] && hidratado).length;
 
   return (
-    <div className="space-y-6">
+    <div className="@container space-y-6">
       <div className="max-w-md">
         <label htmlFor={`${id}-org`} className="text-sm font-semibold">
           Organización
@@ -39,7 +39,7 @@ export function HerramientaOrganizaciones() {
           id={`${id}-org`}
           value={org.id}
           onChange={(e) => setOrgId(e.target.value)}
-          className="mt-2 block min-h-11 w-full rounded-xl border border-borde bg-white px-3 text-base"
+          className="mt-2 block min-h-11 w-full rounded-xl border border-campo bg-white px-3 text-base"
         >
           {ORGANIZACIONES.map((o) => (
             <option key={o.id} value={o.id}>
@@ -48,47 +48,22 @@ export function HerramientaOrganizaciones() {
           ))}
         </select>
         <p className="mt-2 text-sm text-gris">
-          Recibe reportes por {org.canalRespaldo === "whatsapp" ? "WhatsApp (canal de respaldo)" : "la herramienta web"}.
+          Estás viendo los reportes de prueba para esta organización.
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:items-start">
-        <Tarjeta aria-labelledby="titulo-rutas-org">
-          <h2 id="titulo-rutas-org" className="flex items-center gap-2 text-lg font-bold">
-            <MapPin aria-hidden className="size-5 text-verde-700" />
-            Rutas publicadas
-          </h2>
-          <ul className="mt-3 space-y-3">
-            {rutas.map((r) => (
-              <li key={r.id} className="rounded-xl bg-crema p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-semibold">Ruta {r.id}</span>
-                  <Etiqueta>{ZONAS.find((z) => z.id === r.zonaId)?.nombre}</Etiqueta>
-                </div>
-                <p className="mt-1 text-sm">
-                  {listaDias(r.dias).replace(/^./, (c) => c.toUpperCase())}, {textoVentana(r.ventana)}
-                </p>
-                <p className="text-sm text-gris">
-                  {rango(r.cobertura.calle[0], r.cobertura.calle[1], "Calle")} · {rango(r.cobertura.carrera[0], r.cobertura.carrera[1], "Carrera")}
-                </p>
-                <p className="mt-1 text-xs text-gris">Verificada en campo el {fechaLarga(desdeIso(r.validadaEl))}</p>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-xs text-gris">En producción, los cambios de horario se registran aquí y la UAESP los valida antes de publicarlos.</p>
-        </Tarjeta>
-
+      <div className="grid grid-cols-1 items-start gap-4 @min-[50rem]:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <Tarjeta aria-labelledby="titulo-reportes-org">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 id="titulo-reportes-org" className="flex items-center gap-2 text-lg font-bold">
-              <Inbox aria-hidden className="size-5 text-verde-700" />
+              <Inbox aria-hidden className="size-5 text-acento" />
               Reportes recibidos
             </h2>
-            <Etiqueta tono={reportes.length > 0 && respondidos === reportes.length ? "verde" : "amarillo"}>
+            <Etiqueta tono={reportes.length > 0 && respondidos === reportes.length ? "exito" : "amarillo"}>
               {respondidos} de {reportes.length} respondidos
             </Etiqueta>
           </div>
-          <p className="mt-1 text-sm text-gris">Meta del proyecto (OE4): responder el 90 % en 72 horas o menos.</p>
+          <p className="mt-1 text-sm text-gris">Meta del proyecto: responder el 90 % de los reportes en 72 horas o menos.</p>
           {reportes.length === 0 ? (
             <p className="mt-3 text-gris">No hay reportes para esta organización.</p>
           ) : (
@@ -99,10 +74,32 @@ export function HerramientaOrganizaciones() {
             </ul>
           )}
         </Tarjeta>
+        <Tarjeta aria-labelledby="titulo-rutas-org">
+          <h2 id="titulo-rutas-org" className="flex items-center gap-2 text-lg font-bold">
+            <MapPin aria-hidden className="size-5 text-acento" />
+            Rutas de prueba
+          </h2>
+          <ul className="mt-3 space-y-3">
+            {rutas.map((r) => (
+              <li key={r.id} className="rounded-xl border border-borde bg-fondo p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-semibold">Ruta {r.id}</h3>
+                  <Etiqueta>{ZONAS.find((z) => z.id === r.zonaId)?.nombre}</Etiqueta>
+                </div>
+                <p className="mt-2 font-medium">
+                  {listaDias(r.dias).replace(/^./, (c) => c.toUpperCase())}, {textoVentana(r.ventana)}
+                </p>
+                <p className="mt-1 text-sm text-gris">
+                  <strong>Cobertura</strong> · {rango(r.cobertura.calle[0], r.cobertura.calle[1], "Calle")} · {rango(r.cobertura.carrera[0], r.cobertura.carrera[1], "Carrera")}
+                </p>
+                <p className="mt-1 text-xs text-gris">Fecha de validación simulada: {fechaLarga(desdeIso(r.validadaEl))}</p>
+              </li>
+            ))}
+          </ul>
+        </Tarjeta>
       </div>
       <Nota>
-        Los reportes marcados «Ejemplo» son ficticios. Los que hagas desde «¿No pasaron?» en este navegador aparecen aquí y puedes responderlos: la
-        respuesta le llega al ciudadano en «Mis avisos».
+        Los reportes marcados «Ejemplo» vienen con el prototipo. Los que hagas en este navegador aparecen aquí. Puedes ensayar una respuesta y verla en «Mis avisos y reportes».
       </Nota>
     </div>
   );
@@ -111,14 +108,16 @@ export function HerramientaOrganizaciones() {
 function ItemReporte({ reporte, respuesta }: { reporte: Reporte; respuesta?: string }) {
   const [texto, setTexto] = useState("");
   const [error, setError] = useState(false);
+  const campoRef = useRef<HTMLTextAreaElement>(null);
+  const confirmacionRef = useRef<HTMLDivElement>(null);
   const id = useId();
   return (
-    <li className="rounded-xl bg-crema p-3">
+    <li className="rounded-xl bg-fondo p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-mono text-sm font-semibold tracking-wide">{reporte.id}</span>
         <span className="flex gap-1.5">
           {reporte.demo && <Etiqueta tono="gris">Ejemplo</Etiqueta>}
-          <Etiqueta tono={respuesta ? "verde" : "amarillo"}>{respuesta ? "Respondido" : "Pendiente"}</Etiqueta>
+          <Etiqueta tono={respuesta ? "exito" : "amarillo"}>{respuesta ? "Respondido" : "Pendiente"}</Etiqueta>
         </span>
       </div>
       <p className="mt-1 font-semibold">{MOTIVOS[reporte.motivo]}</p>
@@ -127,52 +126,50 @@ function ItemReporte({ reporte, respuesta }: { reporte: Reporte; respuesta?: str
       </p>
       {reporte.comentario && <p className="mt-1 text-sm">«{reporte.comentario}»</p>}
       {respuesta ? (
-        <p className="mt-2 flex items-start gap-2 rounded-lg bg-white p-2 text-sm">
-          <CircleCheck aria-hidden className="mt-0.5 size-4 shrink-0 text-verde-700" />
-          <span>
-            <span className="font-semibold">Respuesta:</span> {respuesta}
-          </span>
-        </p>
+        <div ref={confirmacionRef} tabIndex={-1} className="mt-3 rounded-xl bg-white p-3">
+          <p role="status" className="flex items-start gap-2 font-semibold text-exito">
+            <CircleCheck aria-hidden className="mt-0.5 size-5 shrink-0" />
+            Respuesta guardada en este navegador
+          </p>
+          <p className="mt-1 text-gris">{respuesta}</p>
+        </div>
       ) : (
         <form
-          className="mt-2"
+          className="mt-3"
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
             if (!texto.trim()) {
               setError(true);
+              campoRef.current?.focus();
               return;
             }
             responderReporte(reporte.id, texto);
+            requestAnimationFrame(() => confirmacionRef.current?.focus());
           }}
         >
-          <label htmlFor={`${id}-respuesta`} className="sr-only">
-            Respuesta al reporte {reporte.id}
-          </label>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              id={`${id}-respuesta`}
-              value={texto}
-              maxLength={280}
-              onChange={(e) => {
-                setTexto(e.target.value);
-                setError(false);
-              }}
-              placeholder="Ej.: Mañana pasamos a las 6:00 a. m."
-              aria-invalid={error}
-              aria-describedby={error ? `${id}-error` : undefined}
-              className="min-h-11 flex-1 rounded-xl border border-borde bg-white px-3 text-sm"
-            />
-            <Boton type="submit">
-              <Send aria-hidden className="size-4" />
-              Responder
-            </Boton>
-          </div>
+          <label htmlFor={`${id}-respuesta`} className="block font-semibold">Respuesta al reporte {reporte.id}</label>
+          <textarea
+            ref={campoRef}
+            id={`${id}-respuesta`}
+            rows={2}
+            value={texto}
+            maxLength={280}
+            onChange={(e) => {
+              setTexto(e.target.value);
+              setError(false);
+            }}
+            aria-invalid={error || undefined}
+            aria-describedby={error ? `${id}-error` : undefined}
+            className={`mt-2 block min-h-11 w-full rounded-xl border bg-white p-3 text-base ${error ? "border-rojo" : "border-campo"}`}
+          />
           {error && (
-            <p id={`${id}-error`} className="mt-1 text-sm font-semibold text-rojo" role="alert">
-              Escribe una respuesta antes de enviarla.
-            </p>
+            <p id={`${id}-error`} className="mt-1 text-sm font-semibold text-rojo" role="alert">Escribe una respuesta antes de guardarla.</p>
           )}
+          <Boton type="submit" className="mt-3">
+            <Send aria-hidden className="size-4 shrink-0" />
+            Guardar respuesta de prueba
+          </Boton>
         </form>
       )}
     </li>

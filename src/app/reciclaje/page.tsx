@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Cabecera } from "@/components/ui";
 import { ConsultaDesdeEnlace } from "./consulta-desde-enlace";
 
 export const metadata: Metadata = {
@@ -10,24 +9,11 @@ export const metadata: Metadata = {
 
 export default function PaginaReciclaje() {
   return (
-    <>
-      <Cabecera
-        antetitulo="Aseo · Reciclaje"
-        titulo="¿Cuándo saco el reciclaje?"
-        descripcion="Con tu dirección te decimos qué día y a qué hora pasa la ruta de reciclaje por tu cuadra. Mostramos todas las organizaciones habilitadas, sin escoger ninguna."
-      />
-      <Suspense fallback={<EsqueletoConsulta />}>
+    <div className="mx-auto max-w-2xl has-[[data-resultado-amplio]]:max-w-none">
+      <h1 className="text-[1.75rem] leading-tight font-bold tracking-tight sm:text-4xl">¿Cuándo saco el reciclaje?</h1>
+      <Suspense fallback={<p role="status" className="mt-5 text-gris">Cargando la consulta…</p>}>
         <ConsultaDesdeEnlace />
       </Suspense>
-    </>
-  );
-}
-
-function EsqueletoConsulta() {
-  return (
-    <div className="space-y-6" aria-hidden>
-      <div className="h-72 animate-pulse rounded-tarjeta bg-white/70" />
-      <div className="hidden h-32 rounded-tarjeta border-2 border-dashed border-borde sm:block" />
     </div>
   );
 }

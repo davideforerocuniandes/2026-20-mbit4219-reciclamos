@@ -3,13 +3,12 @@
 import { useSearchParams } from "next/navigation";
 import { ConsultaReciclaje } from "@/features/rutas/consulta-reciclaje";
 import { ejemploPorId } from "@/features/rutas/ejemplos";
+import { useHidratado } from "@/lib/almacen";
 
-/**
- * Los enlaces de la página de inicio abren una dirección de ejemplo con
- * `?ejemplo=<id>`. La URL lleva solo el identificador del ejemplo: nunca una
- * dirección real, porque las URL quedan en el historial y en los registros.
- */
+/** El enlace acepta solo identificadores de ejemplos del catálogo. */
 export function ConsultaDesdeEnlace() {
   const ejemplo = ejemploPorId(useSearchParams().get("ejemplo"));
+  const hidratado = useHidratado();
+  if (ejemplo && !hidratado) return <p role="status" className="mt-5 text-gris">Cargando el ejemplo…</p>;
   return <ConsultaReciclaje key={ejemplo?.id ?? "vacia"} direccionInicial={ejemplo?.direccion} />;
 }

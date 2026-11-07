@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { consultar, esTelefono, fijarHora, sinDesbordeHorizontal, sinViolacionesDeAccesibilidad } from "./apoyo";
+import { EJEMPLOS } from "../src/features/rutas/ejemplos";
+import { consultar, fijarHora, sinDesbordeHorizontal, sinViolacionesDeAccesibilidad } from "./apoyo";
 
 const PAGINAS = [
   { ruta: "/", titulo: "Bogotá ya sabe cuándo sacar la basura. Ahora, el reciclaje." },
@@ -21,28 +22,53 @@ for (const { ruta, titulo } of PAGINAS) {
 
     await page.goto(ruta);
     await expect(page.getByRole("heading", { level: 1, name: titulo })).toBeVisible();
-    await expect(page.getByText("Prototipo académico · datos ficticios")).toBeVisible();
+    await expect(page.getByText("Prototipo académico · Datos ficticios")).toBeVisible();
     await sinDesbordeHorizontal(page);
     await sinViolacionesDeAccesibilidad(page);
     expect(errores).toEqual([]);
   });
 }
 
-test("la navegación se adapta: barra inferior en teléfono, lateral en escritorio", async ({ page }) => {
+test("Inicio abre la consulta y destaca la sección activa", async ({ page }, info) => {
   await page.goto("/");
-  const inferior = page.locator("nav.fixed");
-  const lateral = page.locator("aside nav");
-  if (esTelefono(page)) {
-    await expect(inferior).toBeVisible();
-    await expect(lateral).toBeHidden();
-    await inferior.getByRole("link", { name: "Mis avisos" }).click();
-  } else {
-    await expect(lateral).toBeVisible();
-    await expect(inferior).toBeHidden();
-    await lateral.getByRole("link", { name: "Mis avisos" }).click();
+  const secciones = page.getByRole("navigation", { name: "Secciones" });
+  const enlaces = secciones.getByRole("link");
+  const esMovil = info.project.name === "telefono";
+  const esperados = ["Inicio", "Reciclaje", "Mis avisos", "Organizaciones"];
+  if (!esMovil) esperados.push("Acerca");
+  await expect(enlaces).toHaveText(esperados);
+  await expect(secciones.getByRole("link", { name: "Inicio" })).toHaveAttribute("aria-current", "page");
+
+  const consultarHorario = page.getByRole("main").getByRole("link", { name: /¿Cuándo saco el reciclaje?/ });
+  await expect(consultarHorario).toHaveCSS("background-color", "rgb(249, 210, 72)");
+  await consultarHorario.click();
+  await expect(page).toHaveURL(/\/reciclaje$/);
+  await expect(secciones.getByRole("link", { name: "Reciclaje" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByLabel("Dirección", { exact: true })).toBeVisible();
+  await consultar(page, "Calle 65 Sur # 80-12");
+  await expect(page.getByRole("heading", { name: "Mañana, martes 10 de noviembre" })).toBeVisible();
+
+  await secciones.getByRole("link", { name: "Mis avisos" }).click();
+  await expect(secciones.getByRole("link", { name: "Mis avisos" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("link", { name: "Consultar mi horario" })).toHaveAttribute("href", "/reciclaje");
+
+  const acerca = (esMovil ? page.getByRole("banner") : secciones).getByRole("link", { name: "Acerca", exact: true });
+  await acerca.click();
+  await expect(acerca).toHaveAttribute("aria-current", "page");
+  await page.getByText("Cómo se conectaría con la SuperApp", { exact: true }).click();
+  await expect(page.getByText(/IDECA serviría/)).toBeVisible();
+  await page.getByRole("link", { name: "Probar con un ejemplo" }).click();
+  await expect(page).toHaveURL(/\/reciclaje\?ejemplo=bosa$/);
+  await expect(page.getByRole("heading", { name: "Mañana, martes 10 de noviembre" })).toBeVisible();
+});
+
+test("cada tarjeta de Inicio abre su ejemplo con solo el identificador", async ({ page }) => {
+  for (const ejemplo of EJEMPLOS) {
+    await page.goto("/");
+    await page.getByRole("main").getByRole("link", { name: new RegExp(ejemplo.etiqueta + " ·") }).filter({ hasText: ejemplo.direccion }).click();
+    await expect(page).toHaveURL(new RegExp(`/reciclaje\\?ejemplo=${ejemplo.id}$`));
+    await expect(page.getByRole("region", { name: "Resultado de la consulta" }).getByText(ejemplo.direccion, { exact: true })).toBeVisible();
   }
-  await expect(page).toHaveURL(/\/mis-avisos$/);
-  await expect(page.getByRole("link", { name: "Mis avisos", exact: true }).first()).toHaveAttribute("aria-current", "page");
 });
 
 test("el enlace para saltar al contenido funciona con teclado", async ({ page }) => {
@@ -60,6 +86,9 @@ test("la consulta se puede hacer solo con teclado", async ({ page }) => {
   await page.keyboard.type("Calle 65 Sur # 80-12");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { level: 2, name: "Mañana, martes 10 de noviembre" })).toBeVisible();
+  const resultado = page.getByRole("region", { name: "Resultado de la consulta" });
+  await expect(resultado).toBeFocused();
+  await expect(resultado).toHaveAccessibleDescription(/Mañana, martes 10 de noviembre La ruta pasa entre 5:00 y 7:00 a\. m\./);
 });
 
 test("una ruta inexistente muestra la página 404 en español", async ({ page }) => {
@@ -98,12 +127,13 @@ test("capturas de pantalla para revisión visual", async ({ page }, info) => {
     await page.screenshot({ path: `${carpeta}/${nombre}.png`, fullPage: true });
   }
   await consultar(page, "Calle 65 Sur # 80-12");
-  await page.getByRole("button", { name: "Reportar que no pasaron" }).click();
+  await page.getByText("Reportar que no pasaron", { exact: true }).click();
   await page.waitForTimeout(300);
   await page.screenshot({ path: `${carpeta}/reporte-formulario.png`, fullPage: true });
+  await page.getByText("Configurar aviso de prueba").click();
   await page.getByLabel(/Autorizo guardar solo mi cuadra/).check();
-  await page.getByRole("button", { name: "Activar aviso" }).click();
-  await page.getByRole("button", { name: "Ver cómo llega el aviso" }).click();
+  await page.getByRole("button", { name: "Activar aviso de prueba" }).click();
+  await page.getByText("Ver vista previa del aviso", { exact: true }).click();
   await page.waitForTimeout(400);
   await page.screenshot({ path: `${carpeta}/aviso-vista-previa.png` });
 });
@@ -122,8 +152,31 @@ test("no hay desborde horizontal en anchos intermedios (teléfono pequeño a esc
     await expect(page.getByText(/Tu cuadra:/)).toBeVisible();
     await sinDesbordeHorizontal(page);
     await consultar(page, "Calle 10 Sur # 82-15");
-    await page.getByRole("button", { name: "Reportar que no pasaron" }).click();
-    await expect(page.getByRole("button", { name: "Enviar reporte" })).toBeVisible();
+    await page.getByText("Reportar que no pasaron", { exact: true }).click();
+    await expect(page.getByRole("button", { name: "Guardar reporte de prueba" })).toBeVisible();
     await sinDesbordeHorizontal(page);
   }
+});
+
+test("las pantallas fluyen con texto ampliado y el foco queda sobre la barra inferior", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  for (const ruta of ["/", "/mis-avisos", "/organizaciones", "/acerca", "/reciclaje"]) {
+    await page.goto(ruta);
+    await page.addStyleTag({ content: "html { font-size: 200%; }" });
+    await sinDesbordeHorizontal(page);
+  }
+
+  await consultar(page, "Calle 65 Sur # 80-12");
+  await page.getByText("Configurar aviso de prueba").click();
+  await page.getByText("Reportar que no pasaron", { exact: true }).click();
+  await sinDesbordeHorizontal(page);
+  await page.getByRole("button", { name: "Guardar reporte de prueba" }).focus();
+  await page.keyboard.press("Tab");
+  const cerrar = page.getByRole("button", { name: "Cerrar formulario" });
+  await expect(cerrar).toBeFocused();
+  const caja = await cerrar.boundingBox();
+  const barra = await page.getByRole("navigation", { name: "Secciones" }).boundingBox();
+  expect(caja).not.toBeNull();
+  expect(barra).not.toBeNull();
+  expect(caja!.y + caja!.height).toBeLessThanOrEqual(barra!.y);
 });

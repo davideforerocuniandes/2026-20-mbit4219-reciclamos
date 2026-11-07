@@ -1,166 +1,188 @@
 "use client";
 
-import { BellRing, CalendarCheck, CircleCheck, MapPin, Truck, TriangleAlert } from "lucide-react";
-import { Boton, Etiqueta, Nota, Tarjeta } from "@/components/ui";
+import { Bell, CalendarDays, ChevronDown, CircleCheck, MapPin, Recycle, Truck, TriangleAlert } from "lucide-react";
+import { Boton, Etiqueta, Nota, Tarjeta, cx } from "@/components/ui";
 import { useAlmacen } from "@/lib/almacen";
 import { PanelAviso } from "@/features/avisos/panel-aviso";
 import { almacenIntereses, quitarInteres, registrarInteres } from "@/features/avisos/avisos";
 import { PanelReporte } from "@/features/reportes/panel-reporte";
-import { RUTAS } from "./datos";
 import type { HorarioCamion } from "./datos";
-import type { ResultadoConsulta } from "./consulta";
-import { desdeIso, enBogota, fechaCorta, fechaLarga, fechaRelativa, hora, iso, listaDias, textoVentana } from "./tiempo";
+import type { ResultadoConsulta, RutaEnCuadra } from "./consulta";
+import { desdeIso, enBogota, fechaLarga, fechaRelativa, hora, listaDias, textoVentana } from "./tiempo";
 
 type ConDireccion = Exclude<ResultadoConsulta, { estado: "error-direccion" }>;
 
-export function Resultado({ resultado, ahora }: { resultado: ConDireccion; ahora: Date }) {
+export function Resultado({ resultado, ahora, desdeUbicacion, onCambiar, onEjemplos }: {
+  resultado: ConDireccion;
+  ahora: Date;
+  desdeUbicacion: boolean;
+  onCambiar: () => void;
+  onEjemplos: () => void;
+}) {
+  const hayAcciones = resultado.estado === "con-ruta" && !resultado.zonaCercana;
+
   return (
-    <div className="animar-entrada space-y-4">
-      <Ubicacion resultado={resultado} />
-      {resultado.estado === "con-ruta" && <ConRuta resultado={resultado} ahora={ahora} />}
-      {resultado.estado === "sin-ruta" && <SinRuta resultado={resultado} />}
+    <div className="@container space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-borde bg-white px-4 py-2">
+        <div className="flex min-w-0 items-start gap-2">
+          <MapPin aria-hidden className="mt-0.5 size-5 shrink-0 text-acento" />
+          <div className="min-w-0">
+            <p className="font-semibold wrap-anywhere">{resultado.direccion.texto}</p>
+            {!desdeUbicacion && (
+              <p className="text-sm text-gris">
+                {resultado.zonaCercana ? `Zona de referencia: ${resultado.zona.nombre}` : `Tu cuadra: ${resultado.cuadra.descripcion}`}
+              </p>
+            )}
+          </div>
+        </div>
+        <Boton variante="sutil" className="px-2 underline underline-offset-4" onClick={onCambiar}>
+          {desdeUbicacion ? "Escribir mi dirección" : "Cambiar dirección"}
+        </Boton>
+      </div>
+
+      <div className={cx("grid grid-cols-1 items-start gap-4", hayAcciones && "@min-[52rem]:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]")}>
+        <div className="min-w-0 space-y-4">
+          {resultado.estado === "con-ruta" ? (
+            <Horario resultado={resultado} ahora={ahora} />
+          ) : (
+            <Tarjeta aria-labelledby="titulo-sin-ruta">
+              <h2 id="titulo-sin-ruta" className="flex items-start gap-2 text-xl font-bold">
+                <TriangleAlert aria-hidden className="mt-0.5 size-5 shrink-0 text-acento" />
+                {resultado.zonaCercana ? "Sin horario de referencia para esta zona" : "Esta cuadra no tiene una ruta de prueba"}
+              </h2>
+              <p className="mt-2 text-gris">El catálogo del prototipo tiene cobertura limitada.</p>
+            </Tarjeta>
+          )}
+
+          {resultado.estado === "con-ruta" && <Rutas rutas={resultado.rutas} referencia={resultado.zonaCercana} />}
+
+          {resultado.zonaCercana && (
+            <Nota titulo={desdeUbicacion ? "Horario de referencia" : "Prueba una dirección del catálogo"}>
+              <p>
+                {desdeUbicacion
+                  ? "Escribe tu dirección para consultar por cuadra y probar los avisos o reportes."
+                  : `El prototipo usa ${resultado.zona.nombre} como referencia. Para ensayar avisos y reportes, elige una dirección de ejemplo.`}
+              </p>
+              <Boton variante="sutil" className="mt-1 px-2 underline underline-offset-4" onClick={onEjemplos}>Probar con un ejemplo</Boton>
+            </Nota>
+          )}
+
+          {!resultado.zonaCercana && resultado.estado === "sin-ruta" && <Solicitud resultado={resultado} />}
+          {resultado.camion && <Camion camion={resultado.camion} />}
+        </div>
+
+        {hayAcciones && (
+          <div className="min-w-0 space-y-4">
+            <PanelAviso cuadra={resultado.cuadra} zona={resultado.zona} rutas={resultado.rutas.map((r) => r.ruta)} ahora={ahora} />
+            <PanelReporte cuadra={resultado.cuadra} zona={resultado.zona} rutas={resultado.rutas} ahora={ahora} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function Ubicacion({ resultado }: { resultado: ConDireccion }) {
-  return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-      <span className="flex items-center gap-1.5 font-semibold">
-        <MapPin aria-hidden className="size-4 text-verde-700" />
-        {resultado.direccion.texto}
-      </span>
-      <Etiqueta>{resultado.zona.nombre} (aprox.)</Etiqueta>
-      <span className="w-full text-gris">Tu cuadra: {resultado.cuadra.descripcion}</span>
-    </div>
-  );
-}
+function Horario({ resultado, ahora }: { resultado: Extract<ConDireccion, { estado: "con-ruta" }>; ahora: Date }) {
+  const { fecha: hoy, minutos } = enBogota(ahora);
+  const { proxima, ruta } = resultado.siguiente;
+  const relativa = fechaRelativa(proxima, hoy);
+  const fecha = relativa === "hoy" || relativa === "mañana" ? `${relativa}, ${fechaLarga(proxima)}` : fechaLarga(proxima);
+  const enCurso = relativa === "hoy" && minutos >= ruta.ventana.desde;
 
-function Camion({ camion }: { camion?: HorarioCamion }) {
-  if (!camion) return null;
   return (
-    <Tarjeta aria-labelledby="titulo-camion" className="bg-white">
-      <h2 id="titulo-camion" className="flex items-center gap-2 font-bold">
-        <Truck aria-hidden className="size-5 text-gris" />
-        Camión de la basura (bolsa negra)
-      </h2>
-      <p className="mt-1 text-[0.95rem] text-gris">
-        Pasa los <strong className="text-tinta">{listaDias(camion.dias)}</strong>, {camion.franja} No le entregues la bolsa blanca: el camión la lleva
-        al relleno.
+    <section aria-labelledby="titulo-horario" className="rounded-tarjeta bg-amarillo p-5 text-tinta sm:p-7">
+      <p id="tipo-horario" className="flex items-center gap-2 text-sm font-semibold">
+        <CalendarDays aria-hidden className="size-5 shrink-0" />
+        {resultado.zonaCercana ? "Horario de ejemplo de una zona cercana" : "Próxima recolección de reciclaje · horario de prueba"}
       </p>
+      <h2 id="titulo-horario" className="mt-2 text-2xl leading-tight font-bold tracking-tight sm:text-3xl">
+        {fecha[0].toUpperCase() + fecha.slice(1)}
+      </h2>
+      <p id="franja-horario" className="mt-1 text-xl font-semibold">La ruta pasa {textoVentana(ruta.ventana)}</p>
+      {!resultado.zonaCercana && (
+        <p className="mt-4 rounded-xl bg-white/75 p-3">
+          {enCurso ? "La ruta puede estar pasando. Si la ves, entrega la bolsa blanca directamente a la persona que recoge el reciclaje." : (
+            <>Saca la bolsa blanca poco antes de las <strong>{hora(ruta.ventana.desde)}</strong> Entrégala a quien recoge el reciclaje.</>
+          )}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function Rutas({ rutas, referencia }: { rutas: RutaEnCuadra[]; referencia: boolean }) {
+  const titulo = referencia ? "Rutas de referencia" : rutas.length === 1
+    ? "Organización que pasa por tu cuadra"
+    : "Organizaciones que pasan por tu cuadra";
+
+  return (
+    <Tarjeta aria-labelledby="titulo-rutas">
+      <h2 id="titulo-rutas" className="flex items-start gap-2 text-lg font-bold">
+        <Recycle aria-hidden className="mt-0.5 size-5 shrink-0 text-acento" />
+        {titulo}
+      </h2>
+      {!referencia && rutas.length > 1 && (
+        <p className="mt-2 text-sm text-gris">Puedes entregar la bolsa blanca a cualquiera de estas organizaciones.</p>
+      )}
+      <ul className="mt-3 divide-y divide-borde">
+        {rutas.map(({ ruta, organizacion, proxima }) => (
+          <li key={ruta.id} className="py-3 first:pt-0 last:pb-0">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <h3 className="text-lg font-semibold">{organizacion.nombre}</h3>
+              <Etiqueta tono="amarillo">Próxima: {fechaLarga(proxima)}</Etiqueta>
+            </div>
+            <p className="mt-1">
+              <span className="font-semibold">Pasa los {listaDias(ruta.dias)}</span>, {textoVentana(ruta.ventana)}
+            </p>
+            <p className="mt-1 text-sm text-gris">
+              Ruta {ruta.id} · Validación simulada: {fechaLarga(desdeIso(ruta.validadaEl))}
+            </p>
+          </li>
+        ))}
+      </ul>
     </Tarjeta>
   );
 }
 
-function ConRuta({ resultado, ahora }: { resultado: Extract<ConDireccion, { estado: "con-ruta" }>; ahora: Date }) {
-  const hoy = enBogota(ahora).fecha;
-  const { siguiente, rutas } = resultado;
-  const relativa = fechaRelativa(siguiente.proxima, hoy);
-  const esHoyOManana = relativa === "hoy" || relativa === "mañana";
-
+function Camion({ camion }: { camion: HorarioCamion }) {
   return (
-    <div className="grid gap-4 @4xl:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] @4xl:items-start">
-      <div className="min-w-0 space-y-4">
-        <section aria-labelledby="titulo-horario" className="rounded-tarjeta bg-verde-700 p-6 text-white shadow-tarjeta">
-          <p className="flex items-center gap-2 text-sm font-semibold text-amarillo">
-            <CalendarCheck aria-hidden className="size-4" />
-            Próxima recolección de reciclaje
-          </p>
-          <h2 id="titulo-horario" className="mt-2 text-2xl font-bold leading-tight @lg:text-3xl">
-            {esHoyOManana ? `${relativa[0].toUpperCase()}${relativa.slice(1)}, ${fechaLarga(siguiente.proxima)}` : fechaLarga(siguiente.proxima).replace(/^./, (c) => c.toUpperCase())}
-          </h2>
-          <p className="mt-1 text-lg">La ruta pasa {textoVentana(siguiente.ruta.ventana)}</p>
-          <p className="mt-4 rounded-xl bg-white/10 p-3 text-[0.95rem]">
-            Saca la bolsa blanca poco antes de las <strong>{hora(siguiente.ruta.ventana.desde)}</strong>, para que no quede horas en el andén.
-          </p>
-        </section>
-
-        <Tarjeta aria-labelledby="titulo-rutas">
-          <h2 id="titulo-rutas" className="font-bold">
-            {rutas.length === 1 ? "Organización que pasa por tu cuadra" : `${rutas.length} organizaciones pasan por tu cuadra`}
-          </h2>
-          {rutas.length > 1 && (
-            <p className="mt-1 text-sm text-gris">Las rutas no son exclusivas: puedes entregar el material a cualquiera de ellas.</p>
-          )}
-          <ul className="mt-3 divide-y divide-borde">
-            {rutas.map(({ ruta, organizacion, proxima }) => (
-              <li key={ruta.id} className="flex flex-col items-start gap-1 py-3 first:pt-0 last:pb-0 @xl:flex-row @xl:items-center @xl:justify-between @xl:gap-4">
-                <div className="min-w-0">
-                  <p className="font-semibold">{organizacion.nombre}</p>
-                  <p className="text-sm text-gris">
-                    {listaDias(ruta.dias).replace(/^./, (c) => c.toUpperCase())}, {textoVentana(ruta.ventana)}
-                  </p>
-                  <p className="text-xs text-gris">
-                    Ruta {ruta.id} · horario verificado el {fechaLarga(desdeIso(ruta.validadaEl))}
-                  </p>
-                </div>
-                <span className="shrink-0">
-                  <Etiqueta tono={iso(proxima) === iso(siguiente.proxima) ? "amarillo" : "gris"}>Próxima: {fechaCorta(proxima, hoy)}</Etiqueta>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Tarjeta>
-
-        <Camion camion={resultado.camion} />
+    <details className="group rounded-tarjeta border border-borde bg-white">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 rounded-tarjeta px-4 py-3 font-semibold text-tinta [&::-webkit-details-marker]:hidden">
+        <Truck aria-hidden className="size-5 shrink-0 text-gris" />
+        Basura · bolsa negra
+        <ChevronDown aria-hidden className="ml-auto size-5 shrink-0 group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-borde px-4 py-3 text-gris">
+        <p>Horario de prueba del camión. Pasa los <strong className="text-tinta">{listaDias(camion.dias)}</strong>, {camion.franja}</p>
+        <p className="mt-2">Reserva la bolsa blanca para quien recoge el reciclaje.</p>
       </div>
-
-      <div className="min-w-0 space-y-4">
-        <PanelAviso cuadra={resultado.cuadra} zona={resultado.zona} rutas={rutas.map((r) => r.ruta)} ahora={ahora} />
-        <PanelReporte cuadra={resultado.cuadra} zona={resultado.zona} rutas={rutas} ahora={ahora} />
-      </div>
-    </div>
+    </details>
   );
 }
 
-function SinRuta({ resultado }: { resultado: Extract<ConDireccion, { estado: "sin-ruta" }> }) {
+function Solicitud({ resultado }: { resultado: Extract<ConDireccion, { estado: "sin-ruta" }> }) {
   const intereses = useAlmacen(almacenIntereses);
-  const registrado = intereses.some((i) => i.cuadraClave === resultado.cuadra.clave);
-  const zonaConRutas = RUTAS.some((r) => r.zonaId === resultado.zona.id);
+  const { cuadra, zona } = resultado;
+  const registrado = intereses.some((i) => i.cuadraClave === cuadra.clave);
 
   return (
-    <div className="space-y-4">
-      <section aria-labelledby="titulo-sin-ruta" className="rounded-tarjeta bg-amarillo-50 p-6 shadow-tarjeta ring-1 ring-amarillo/60">
-        <p className="flex items-center gap-2 text-sm font-semibold text-tinta">
-          <TriangleAlert aria-hidden className="size-4" />
-          Sin ruta registrada
-        </p>
-        <h2 id="titulo-sin-ruta" className="mt-2 text-2xl font-bold leading-tight">
-          Todavía no hay una ruta de reciclaje registrada en tu cuadra
-        </h2>
-        <p className="mt-2 text-[0.95rem]">
-          {zonaConRutas
-            ? `En ${resultado.zona.nombre} ya hay rutas en otros sectores, pero ninguna organización ha registrado esta cuadra.`
-            : `${resultado.zona.nombre} todavía no hace parte del piloto.`}{" "}
-          No te mostramos un horario que no podemos verificar.
-        </p>
-        <div className="mt-4">
-          {registrado ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="flex items-center gap-2 font-semibold text-verde-700" role="status">
-                <CircleCheck aria-hidden className="size-5" />
-                Te avisaremos cuando haya ruta
-              </p>
-              <Boton variante="sutil" onClick={() => quitarInteres(resultado.cuadra.clave)}>
-                Ya no me avises
-              </Boton>
-            </div>
-          ) : (
-            <Boton
-              onClick={() =>
-                registrarInteres({ cuadraClave: resultado.cuadra.clave, cuadraDescripcion: resultado.cuadra.descripcion, zonaNombre: resultado.zona.nombre })
-              }
-            >
-              <BellRing aria-hidden className="size-4" />
-              Avísame cuando haya ruta
-            </Boton>
-          )}
-        </div>
-      </section>
-      <Nota titulo="Mientras tanto">
-        Guarda la bolsa blanca separada. Si un reciclador pasa por tu cuadra, entrégasela directamente y no al camión.
-      </Nota>
-      <Camion camion={resultado.camion} />
-    </div>
+    <Tarjeta aria-labelledby="titulo-solicitud">
+      <h2 id="titulo-solicitud" className="font-bold">Aviso cuando haya ruta</h2>
+      <p className="mt-1 text-gris">Puedes ensayar la solicitud con tu cuadra. Se guarda en este navegador como parte de la prueba.</p>
+      <p role="status" className={registrado ? "mt-3 flex items-center gap-2 font-semibold text-exito" : "sr-only"}>
+        {registrado && <><CircleCheck aria-hidden className="size-5 shrink-0" /> Solicitud de prueba guardada</>}
+      </p>
+      <Boton
+        variante="secundaria"
+        className="mt-3"
+        onClick={() => {
+          if (registrado) quitarInteres(cuadra.clave);
+          else registrarInteres({ cuadraClave: cuadra.clave, cuadraDescripcion: cuadra.descripcion, zonaNombre: zona.nombre });
+        }}
+      >
+        <Bell aria-hidden className="size-4 shrink-0" />
+        {registrado ? "Quitar solicitud" : "Guardar solicitud de prueba"}
+      </Boton>
+    </Tarjeta>
   );
 }

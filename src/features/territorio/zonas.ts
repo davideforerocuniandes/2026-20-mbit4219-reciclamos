@@ -58,9 +58,9 @@ function acotar(valor: number, [min, max]: readonly [number, number]): number {
  * se asigna a la zona más cercana y se acerca a su borde. Así cualquier
  * dirección de Bogotá recibe un resultado en el prototipo.
  */
-export function ubicarEnZona(punto: PuntoMalla): { zona: Zona; punto: PuntoMalla } {
+export function ubicarEnZona(punto: PuntoMalla): { zona: Zona; punto: PuntoMalla; zonaCercana: boolean } {
   const exacta = zonaDe(punto);
-  if (exacta) return { zona: exacta, punto };
+  if (exacta) return { zona: exacta, punto, zonaCercana: false };
   let mejor = ZONAS[0];
   let menor = Infinity;
   for (const z of ZONAS) {
@@ -70,13 +70,13 @@ export function ubicarEnZona(punto: PuntoMalla): { zona: Zona; punto: PuntoMalla
       mejor = z;
     }
   }
-  return { zona: mejor, punto: { calle: acotar(punto.calle, mejor.calle), carrera: acotar(punto.carrera, mejor.carrera) } };
+  return { zona: mejor, zonaCercana: true, punto: { calle: acotar(punto.calle, mejor.calle), carrera: acotar(punto.carrera, mejor.carrera) } };
 }
 
 /** Límites aproximados del área urbana de Bogotá para validar una geolocalización. */
 const BOGOTA = { latMin: 4.45, latMax: 4.84, lonMin: -74.24, lonMax: -73.98 } as const;
 
-export function enBogota(lat: number, lon: number): boolean {
+export function dentroDeBogota(lat: number, lon: number): boolean {
   return lat >= BOGOTA.latMin && lat <= BOGOTA.latMax && lon >= BOGOTA.lonMin && lon <= BOGOTA.lonMax;
 }
 

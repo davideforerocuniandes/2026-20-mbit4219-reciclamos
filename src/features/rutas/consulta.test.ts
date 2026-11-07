@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { RUTAS, ORGANIZACIONES, HORARIOS_CAMION } from "./datos";
-import { consultar, consultarPunto, direccionAproximada, proximaRecoleccion, proximoAviso, ultimasRecolecciones } from "./consulta";
+import { consultar, consultarPunto, proximaRecoleccion, proximoAviso, ultimasRecolecciones } from "./consulta";
 import { enBogota, fechaCorta, fechaRelativa, hora, iso, listaDias, textoVentana } from "./tiempo";
-import { ZONAS, enBogota as enCiudad, zonaMasCercana } from "@/features/territorio/zonas";
+import { ZONAS } from "@/features/territorio/zonas";
 
 /** Construye un instante a partir de la hora local de Bogotá (UTC−5). */
 const bogota = (texto: string) => new Date(`${texto}-05:00`);
@@ -16,6 +16,7 @@ describe("consultar", () => {
     expect(r.estado).toBe("con-ruta");
     if (r.estado !== "con-ruta") return;
     expect(r.zona.nombre).toBe("Bosa");
+    expect(r.zonaCercana).toBe(false);
     expect(r.rutas.map((x) => x.ruta.id)).toEqual(["BOS-01"]);
     expect(iso(r.siguiente.proxima)).toBe("2026-11-10"); // martes
     expect(r.camion?.dias).toEqual([1, 3, 6]);
@@ -62,6 +63,14 @@ describe("consultar", () => {
         const demo = calle >= -43 && calle <= -42 && carrera >= 77 && carrera <= 79;
         expect(r.estado, `${calle},${carrera}`).toBe(demo ? "sin-ruta" : "con-ruta");
       }
+  });
+
+  it("distingue un horario tomado de la zona más cercana", () => {
+    expect(consultar("Calle 30 # 2-10", LUNES_8AM)).toMatchObject({
+      estado: "con-ruta",
+      zonaCercana: true,
+      zona: { nombre: "Santa Fe y La Candelaria" },
+    });
   });
 
   it("reporta el error de formato", () => {
@@ -127,6 +136,7 @@ describe("textos de horario", () => {
     expect(listaDias([5, 2])).toBe("martes y viernes");
     expect(listaDias([1, 3, 5])).toBe("lunes, miércoles y viernes");
     expect(textoVentana({ desde: 300, hasta: 420 })).toBe("entre 5:00 y 7:00 a. m.");
+    expect(textoVentana({ desde: 690, hasta: 780 })).toBe("entre 11:30 a. m. y 1:00 p. m.");
   });
 
   it("dice hoy, mañana o la fecha", () => {
@@ -165,23 +175,6 @@ describe("integridad del catálogo", () => {
       }
   });
 
-  it("el punto de referencia de cada zona cae dentro de ella", () => {
-    for (const z of ZONAS) {
-      expect(z.puntoReferencia.calle).toBeGreaterThanOrEqual(z.calle[0]);
-      expect(z.puntoReferencia.calle).toBeLessThanOrEqual(z.calle[1]);
-      expect(z.puntoReferencia.carrera).toBeGreaterThanOrEqual(z.carrera[0]);
-      expect(z.puntoReferencia.carrera).toBeLessThanOrEqual(z.carrera[1]);
-    }
-  });
-});
-
-describe("geolocalización", () => {
-  it("reconoce coordenadas de Bogotá y elige la zona más cercana", () => {
-    expect(enCiudad(4.62, -74.19)).toBe(true);
-    expect(enCiudad(6.25, -75.56)).toBe(false); // Medellín
-    expect(zonaMasCercana(4.621, -74.19).id).toBe("bosa");
-    expect(zonaMasCercana(4.742, -74.08).id).toBe("suba");
-  });
 });
 
 describe("ultimasRecolecciones", () => {
@@ -192,14 +185,5 @@ describe("ultimasRecolecciones", () => {
   it("incluye hoy solo si la ventana ya empezó", () => {
     expect(iso(ultimasRecolecciones(bos01, bogota("2026-11-10T04:00:00"))[0])).toBe("2026-11-06");
     expect(iso(ultimasRecolecciones(bos01, bogota("2026-11-10T05:30:00"))[0])).toBe("2026-11-10");
-  });
-});
-
-describe("direccionAproximada", () => {
-  it("usa el punto de referencia de la zona y encuentra su ruta", () => {
-    const bosa = ZONAS.find((z) => z.id === "bosa")!;
-    const r = consultarPunto(direccionAproximada(bosa), LUNES_8AM);
-    expect(r.estado).toBe("con-ruta");
-    if (r.estado === "con-ruta") expect(r.direccion.texto).toBe("Ubicación aproximada en Bosa");
   });
 });

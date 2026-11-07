@@ -22,15 +22,15 @@ export function ResumenAviso() {
   return (
     <Link
       href="/mis-avisos"
-      className="animar-entrada flex items-center gap-4 rounded-tarjeta bg-white p-4 shadow-tarjeta ring-1 ring-borde/60 hover:ring-verde-700"
+      className="flex min-h-11 items-center gap-4 rounded-tarjeta bg-white p-4 shadow-tarjeta ring-1 ring-borde/60 hover:ring-acento"
     >
-      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-verde-50 text-verde-700">
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-acento-suave text-acento">
         <BellRing aria-hidden className="size-5" />
       </span>
       <span className="min-w-0">
-        <span className="block font-semibold">Tu aviso está activo</span>
+        <span className="block font-semibold">Tu aviso de prueba está activo</span>
         <span className="block text-sm text-gris">
-          {m ? `Próximo aviso: ${fechaRelativa(m.fecha, enBogota(ahora).fecha)} a las ${hora(m.minutos)}` : "Te avisamos la noche anterior"} ·{" "}
+          {m ? `El aviso aparecería ${fechaRelativa(m.fecha, enBogota(ahora).fecha)} a las ${hora(m.minutos)}` : "Aviso simulado la noche anterior"} ·{" "}
           {aviso.cuadraDescripcion}
         </span>
       </span>

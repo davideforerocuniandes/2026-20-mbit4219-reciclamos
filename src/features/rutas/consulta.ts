@@ -1,5 +1,5 @@
 import { cuadraDe, leerDireccion, type Cuadra, type Direccion, type ErrorDireccion, type PuntoMalla } from "@/features/direcciones/direccion";
-import { ubicarEnZona, type Zona } from "@/features/territorio/zonas";
+import { dentroDeBogota, ubicarEnZona, zonaMasCercana, type Zona } from "@/features/territorio/zonas";
 import { HORARIOS_CAMION, RUTAS, SECTORES_SIN_RUTA, organizacion, type HorarioCamion, type Organizacion, type Ruta } from "./datos";
 import { enBogota, instanteBogota, sumarDias, type FechaCivil } from "./tiempo";
 
@@ -14,12 +14,13 @@ export interface RutaEnCuadra {
 
 export type ResultadoConsulta =
   | { estado: "error-direccion"; error: ErrorDireccion }
-  | { estado: "sin-ruta"; direccion: Direccion; cuadra: Cuadra; zona: Zona; camion?: HorarioCamion }
+  | { estado: "sin-ruta"; direccion: Direccion; cuadra: Cuadra; zona: Zona; zonaCercana: boolean; camion?: HorarioCamion }
   | {
       estado: "con-ruta";
       direccion: Direccion;
       cuadra: Cuadra;
       zona: Zona;
+      zonaCercana: boolean;
       rutas: RutaEnCuadra[];
       /** La recolección más próxima entre todas las rutas que pasan por la cuadra. */
       siguiente: RutaEnCuadra;
@@ -81,21 +82,36 @@ function comparar(a: FechaCivil, b: FechaCivil): number {
   return a.anio - b.anio || a.mes - b.mes || a.dia - b.dia;
 }
 
-export function consultarPunto(direccion: Direccion, ahora: Date): ResultadoConsulta {
+export function consultarPunto(direccion: Direccion, ahora: Date): Exclude<ResultadoConsulta, { estado: "error-direccion" }> {
   const cuadra = cuadraDe(direccion);
-  const { zona, punto } = ubicarEnZona(direccion.punto);
+  const { zona, punto, zonaCercana } = ubicarEnZona(direccion.punto);
   const camion = HORARIOS_CAMION.find((c) => c.zonaId === zona.id);
   const rutas = rutasEn(punto)
     .map((ruta) => ({ ruta, organizacion: organizacion(ruta.organizacionId), proxima: proximaRecoleccion(ruta, ahora) }))
     .sort((a, b) => comparar(a.proxima, b.proxima) || a.ruta.ventana.desde - b.ruta.ventana.desde);
-  if (rutas.length === 0) return { estado: "sin-ruta", direccion, cuadra, zona, camion };
-  return { estado: "con-ruta", direccion, cuadra, zona, rutas, siguiente: rutas[0], camion };
+  if (rutas.length === 0) return { estado: "sin-ruta", direccion, cuadra, zona, zonaCercana, camion };
+  return { estado: "con-ruta", direccion, cuadra, zona, zonaCercana, rutas, siguiente: rutas[0], camion };
 }
 
 export function consultar(texto: string, ahora: Date): ResultadoConsulta {
   const lectura = leerDireccion(texto);
   if (!lectura.ok) return { estado: "error-direccion", error: lectura.error };
   return consultarPunto(lectura.direccion, ahora);
+}
+
+/** El GPS permite consultar un punto de referencia de la zona. */
+export function consultarUbicacion(latitud: number, longitud: number, ahora: Date) {
+  if (!dentroDeBogota(latitud, longitud)) return null;
+  const { nombre, puntoReferencia } = zonaMasCercana(latitud, longitud);
+  const resultado = consultarPunto({
+    tipo: "CALLE",
+    viaPrincipal: Math.abs(puntoReferencia.calle),
+    viaGeneradora: puntoReferencia.carrera,
+    placa: 0,
+    texto: `Ubicación aproximada en ${nombre}`,
+    punto: puntoReferencia,
+  }, ahora);
+  return { ...resultado, zonaCercana: true };
 }
 
 /** Últimos días de paso ya ocurridos (o en curso), del más reciente al más antiguo. Sirve para el reporte «¿No pasaron?». */
@@ -110,17 +126,4 @@ export function ultimasRecolecciones(ruta: Ruta, ahora: Date, cuantas = 3): Fech
     fechas.push(fecha);
   }
   return fechas;
-}
-
-/** Dirección sintética para «Usar mi ubicación»: el punto de referencia de la zona más cercana. */
-export function direccionAproximada(zona: Zona): Direccion {
-  const { calle, carrera } = zona.puntoReferencia;
-  return {
-    tipo: "CALLE",
-    viaPrincipal: Math.abs(calle),
-    viaGeneradora: carrera,
-    placa: 0,
-    texto: `Ubicación aproximada en ${zona.nombre}`,
-    punto: zona.puntoReferencia,
-  };
 }

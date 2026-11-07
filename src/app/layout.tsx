@@ -1,13 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Public_Sans } from "next/font/google";
 import { MarcoApp } from "@/components/marco-app";
 import "./globals.css";
-
-const publicSans = Public_Sans({
-  variable: "--font-public-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -21,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1c5c3c",
+  themeColor: "#E3272A",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -29,7 +22,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="es-CO" className={`${publicSans.variable} antialiased`}>
+    <html lang="es-CO" className="antialiased">
       <body className="font-sans">
         <MarcoApp>{children}</MarcoApp>
       </body>

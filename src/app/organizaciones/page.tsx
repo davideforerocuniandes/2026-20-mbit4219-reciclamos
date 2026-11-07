@@ -10,7 +10,7 @@ export default function PaginaOrganizaciones() {
       <Cabecera
         antetitulo="Organizaciones de recicladores"
         titulo="Rutas y reportes"
-        descripcion="Herramienta gratuita para que cada organización mantenga sus rutas al día y responda los reportes «¿No pasaron?» de su cuadra."
+        descripcion="Consulta las rutas de ejemplo y ensaya cómo responder a los reportes guardados en este navegador."
       />
       <HerramientaOrganizaciones />
     </>

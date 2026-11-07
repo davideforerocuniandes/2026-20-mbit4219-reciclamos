@@ -1,28 +1,19 @@
 import Link from "next/link";
 import { Info, Recycle } from "lucide-react";
 import type { ReactNode } from "react";
-import { NavegacionInferior, NavegacionLateral } from "./navegacion";
+import { EnlaceAcerca, NavegacionInferior, NavegacionLateral } from "./navegacion";
 
 function Marca() {
   return (
-    <Link href="/" className="flex items-center gap-2.5 rounded-lg">
-      <span className="grid size-9 place-items-center rounded-xl bg-amarillo text-verde-900">
-        <Recycle aria-hidden className="size-5" strokeWidth={2.5} />
+    <Link href="/" className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-lg">
+      <span className="grid size-[40px] shrink-0 place-items-center rounded-xl bg-amarillo text-tinta">
+        <Recycle aria-hidden className="size-[24px]" />
       </span>
-      <span className="leading-tight">
-        <span className="block text-[0.95rem] font-bold text-tinta">SuperApp</span>
-        <span className="block text-xs font-medium text-gris">Maqueta · Reciclamos</span>
+      <span className="min-w-0 leading-tight wrap-anywhere">
+        <span className="block font-bold">SuperApp</span>
+        <span className="block text-sm text-gris">Maqueta · Reciclamos</span>
       </span>
     </Link>
-  );
-}
-
-/** Franja que aclara, en todas las pantallas, que es un prototipo con datos ficticios. */
-function FranjaPrototipo() {
-  return (
-    <div className="bg-verde-900 px-4 py-1.5 text-center text-xs font-medium text-white">
-      Prototipo académico · datos ficticios · no es un servicio oficial de la Alcaldía de Bogotá
-    </div>
   );
 }
 
@@ -35,10 +26,11 @@ export function MarcoApp({ children }: { children: ReactNode }) {
       >
         Saltar al contenido
       </a>
-      <FranjaPrototipo />
+      <p className="border-b-2 border-marca bg-acento px-4 py-1.5 text-center text-sm font-medium text-white">
+        Prototipo académico · Datos ficticios
+      </p>
       <div className="mx-auto flex w-full max-w-7xl flex-1">
-        {/* Escritorio: barra lateral fija. */}
-        <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-8 border-r border-borde bg-white/60 px-4 py-6 lg:flex">
+        <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-8 overflow-y-auto border-r border-borde bg-white/70 px-4 py-6 lg:flex">
           <Marca />
           <NavegacionLateral />
           <p className="mt-auto flex gap-2 text-xs text-gris">
@@ -48,15 +40,11 @@ export function MarcoApp({ children }: { children: ReactNode }) {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* Teléfono: barra superior. */}
-          <header className="sticky top-0 z-20 flex items-center justify-between border-b border-borde bg-crema/95 px-4 py-3 backdrop-blur lg:hidden">
+          <header className="flex items-center justify-between gap-3 border-b border-borde bg-white px-4 py-2 lg:hidden">
             <Marca />
-            <Link href="/acerca" className="grid size-11 place-items-center rounded-full text-verde-700 hover:bg-verde-50" aria-label="Acerca del prototipo">
-              <Info aria-hidden className="size-5" />
-            </Link>
+            <EnlaceAcerca />
           </header>
-
-          <main id="contenido" className="flex-1 px-4 pb-28 pt-6 sm:px-6 lg:px-10 lg:pb-12 lg:pt-10">
+          <main id="contenido" tabIndex={-1} className="flex-1 px-4 pt-6 pb-[var(--espacio-navegacion)] sm:px-6 lg:px-10 lg:pt-10 lg:pb-12">
             {children}
           </main>
         </div>

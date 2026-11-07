@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-/** Cabeceras de seguridad básicas: la app no usa iframes, cámara ni micrófono; la ubicación solo desde el propio sitio. */
+/** La ubicación se permite en el propio sitio cuando el usuario la solicita. */
 const cabecerasSeguridad = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

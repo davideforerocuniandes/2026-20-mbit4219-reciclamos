@@ -1,50 +1,50 @@
 @import "tailwindcss";
 
-/*
- * Tokens de diseño de Reciclamos. Paleta tomada del pitch del proyecto:
- * verde (servicio público, reciclaje), crema (fondo cálido) y amarillo
- * (acento para la acción principal). Contrastes revisados para WCAG 2.2 AA.
- */
+/* Rojo y amarillo del Manual de Uso de Marca Ciudad de Bogotá. */
 @theme {
-  --color-tinta: #13261b;
-  --color-verde-900: #123d28;
-  --color-verde-700: #1c5c3c;
-  --color-verde-600: #2a6e4b;
-  --color-verde-100: #d6e6db;
-  --color-verde-50: #e4eee7;
-  --color-crema: #f6f3ea;
-  --color-amarillo: #f2c14e;
-  --color-amarillo-50: #fbf1d2;
-  --color-rojo: #b42318;
-  --color-rojo-50: #fdecea;
-  --color-gris: #4f5c54;
-  --color-borde: #d9dccf;
+  --color-marca: #e3272a;
+  --color-acento: #aa1023;
+  --color-acento-suave: #fff1f2;
+  --color-amarillo: #f9d248;
+  --color-amarillo-50: #fff6d9;
+  --color-tinta: #1c1917;
+  --color-gris: #57534e;
+  --color-fondo: #faf9f6;
+  --color-borde: #ded9d2;
+  --color-campo: #8c8379;
+  --color-exito: #21583e;
+  --color-exito-suave: #eaf4ee;
+  --color-rojo: #9b1627;
+  --color-rojo-50: #fff0f0;
 
-  --font-sans: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
-
+  --font-sans: system-ui, sans-serif;
   --radius-tarjeta: 1rem;
-  --shadow-tarjeta: 0 1px 2px rgb(19 38 27 / 0.06), 0 4px 16px rgb(19 38 27 / 0.06);
+  --shadow-tarjeta: 0 1px 2px rgb(28 25 23 / 0.05), 0 6px 20px rgb(28 25 23 / 0.05);
 }
 
 :root {
   color-scheme: light;
+  --espacio-navegacion: calc(6rem + env(safe-area-inset-bottom));
 }
 
 html {
-  -webkit-text-size-adjust: 100%;
-  scroll-padding-top: 5rem;
+  scroll-padding-block: 1rem;
+}
+
+@media (width < 64rem) {
+  html {
+    scroll-padding-bottom: var(--espacio-navegacion);
+  }
 }
 
 body {
-  background: var(--color-crema);
+  background: var(--color-fondo);
   color: var(--color-tinta);
 }
 
-/* Enfoque visible y consistente para teclado. */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 3px solid var(--color-amarillo);
+  outline: 3px solid var(--color-acento);
   outline-offset: 2px;
-  border-radius: 0.5rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -53,21 +53,5 @@ body {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
-}
-
-@keyframes entrar {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animar-entrada {
-  animation: entrar 220ms ease-out backwards; /* sin transform residual al terminar */
 }
