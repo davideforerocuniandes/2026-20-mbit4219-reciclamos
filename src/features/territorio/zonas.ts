@@ -31,6 +31,13 @@ export const ZONAS: readonly Zona[] = [
   { id: "usaquen", nombre: "Usaquén", calle: [100, 200], carrera: [-10, 45], centro: { lat: 4.7035, lon: -74.0305 }, puntoReferencia: { calle: 120, carrera: 7 } },
   { id: "puente-aranda", nombre: "Puente Aranda", calle: [-22, 12], carrera: [30, 67], centro: { lat: 4.6155, lon: -74.1065 }, puntoReferencia: { calle: 6, carrera: 50 } },
   { id: "centro", nombre: "Santa Fe y La Candelaria", calle: [-10, 25], carrera: [-10, 13], centro: { lat: 4.6015, lon: -74.0705 }, puntoReferencia: { calle: 19, carrera: 5 } },
+  { id: "martires", nombre: "Los Mártires", calle: [1, 25], carrera: [14, 29], centro: { lat: 4.6045, lon: -74.0895 }, puntoReferencia: { calle: 19, carrera: 22 } },
+  { id: "antonio-narino", nombre: "Antonio Nariño", calle: [-22, 0], carrera: [14, 29], centro: { lat: 4.5895, lon: -74.1025 }, puntoReferencia: { calle: -15, carrera: 20 } },
+  { id: "san-cristobal", nombre: "San Cristóbal", calle: [-60, -11], carrera: [-20, 9], centro: { lat: 4.5605, lon: -74.0855 }, puntoReferencia: { calle: -27, carrera: -3 } },
+  { id: "rafael-uribe", nombre: "Rafael Uribe Uribe", calle: [-60, -23], carrera: [10, 29], centro: { lat: 4.5675, lon: -74.1135 }, puntoReferencia: { calle: -36, carrera: 20 } },
+  { id: "tunjuelito", nombre: "Tunjuelito", calle: [-60, -23], carrera: [30, 67], centro: { lat: 4.5755, lon: -74.1355 }, puntoReferencia: { calle: -50, carrera: 40 } },
+  { id: "ciudad-bolivar", nombre: "Ciudad Bolívar", calle: [-100, -61], carrera: [14, 71], centro: { lat: 4.5355, lon: -74.1555 }, puntoReferencia: { calle: -70, carrera: 30 } },
+  { id: "usme", nombre: "Usme", calle: [-100, -61], carrera: [-20, 13], centro: { lat: 4.5005, lon: -74.1205 }, puntoReferencia: { calle: -76, carrera: 3 } },
 ];
 
 function dentro(valor: number, [min, max]: readonly [number, number]): boolean {
@@ -39,6 +46,31 @@ function dentro(valor: number, [min, max]: readonly [number, number]): boolean {
 
 export function zonaDe(punto: PuntoMalla): Zona | undefined {
   return ZONAS.find((z) => dentro(punto.calle, z.calle) && dentro(punto.carrera, z.carrera));
+}
+
+function acotar(valor: number, [min, max]: readonly [number, number]): number {
+  return Math.min(Math.max(valor, min), max);
+}
+
+/**
+ * Zona de un punto de la malla y el punto dentro de ella. Los rectángulos no
+ * cubren toda la ciudad, así que un punto que cae entre zonas (o en un borde)
+ * se asigna a la zona más cercana y se acerca a su borde. Así cualquier
+ * dirección de Bogotá recibe un resultado en el prototipo.
+ */
+export function ubicarEnZona(punto: PuntoMalla): { zona: Zona; punto: PuntoMalla } {
+  const exacta = zonaDe(punto);
+  if (exacta) return { zona: exacta, punto };
+  let mejor = ZONAS[0];
+  let menor = Infinity;
+  for (const z of ZONAS) {
+    const d = (acotar(punto.calle, z.calle) - punto.calle) ** 2 + (acotar(punto.carrera, z.carrera) - punto.carrera) ** 2;
+    if (d < menor) {
+      menor = d;
+      mejor = z;
+    }
+  }
+  return { zona: mejor, punto: { calle: acotar(punto.calle, mejor.calle), carrera: acotar(punto.carrera, mejor.carrera) } };
 }
 
 /** Límites aproximados del área urbana de Bogotá para validar una geolocalización. */

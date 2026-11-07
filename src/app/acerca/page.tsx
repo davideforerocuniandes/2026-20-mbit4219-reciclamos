@@ -59,8 +59,8 @@ export default function Acerca() {
             </h2>
             <p className="mt-2 text-[0.95rem]">Localidades con rutas de prueba: {pilotos.join(", ")}.</p>
             <p className="mt-1 text-sm text-gris">
-              Otras zonas muestran el mensaje «todavía no hay ruta registrada», tal como haría la función real donde no hay organizaciones con rutas
-              verificadas.
+              Cualquier dirección urbana de Bogotá recibe un horario de prueba de la localidad más cercana. Un sector pequeño de Kennedy muestra el
+              mensaje «todavía no hay ruta registrada», tal como haría la función real donde no hay organizaciones con rutas verificadas.
             </p>
           </Tarjeta>
 

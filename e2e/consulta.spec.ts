@@ -62,14 +62,10 @@ test.describe("consulta por dirección", () => {
     await expect(page.getByText("Calle 42 Sur entre Carrera 78 y Carrera 79")).toBeVisible();
   });
 
-  test("distingue una localidad fuera del piloto", async ({ page }) => {
-    await consultar(page, "Calle 120 # 7-30");
-    await expect(page.getByText("Usaquén todavía no hace parte del piloto.", { exact: false })).toBeVisible();
-  });
-
-  test("explica cuando el prototipo no sabe ubicar la dirección", async ({ page }) => {
-    await consultar(page, "Calle 30 # 2-10");
-    await expect(page.getByRole("heading", { name: "No podemos ubicar esa dirección en el prototipo" })).toBeVisible();
+  test("una dirección real copiada del recibo, con apartamento, recibe horario", async ({ page }) => {
+    await consultar(page, "Carrera 15 # 127-40 Torre 3 Apto 502");
+    await expect(page.getByText("Usaquén (aprox.)")).toBeVisible();
+    await expect(page.getByText("Próxima recolección de reciclaje")).toBeVisible();
   });
 
   test("valida el formato y el rango sin perder lo escrito", async ({ page }) => {

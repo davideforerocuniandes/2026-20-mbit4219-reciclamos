@@ -37,14 +37,31 @@ describe("consultar", () => {
     if (r.estado === "sin-ruta") expect(r.zona.nombre).toBe("Kennedy");
   });
 
-  it("dice que no hay ruta en una localidad fuera del piloto", () => {
-    const r = consultar("Calle 120 # 7-30", LUNES_8AM);
-    expect(r.estado).toBe("sin-ruta");
-    if (r.estado === "sin-ruta") expect(r.zona.nombre).toBe("Usaquén");
+  it("una cuadra vecina del sector sin ruta sí tiene ruta", () => {
+    expect(consultar("Calle 45 Sur # 78-15", LUNES_8AM).estado).toBe("con-ruta");
   });
 
-  it("separa las direcciones que el prototipo no sabe ubicar", () => {
-    expect(consultar("Calle 30 # 2-10", LUNES_8AM).estado).toBe("fuera-de-cobertura");
+  it.each([
+    ["Calle 120 # 7-30", "Usaquén"],
+    ["Carrera 15 # 127-40 Apto 301", "Usaquén"],
+    ["Calle 30 # 2-10", "Santa Fe y La Candelaria"],
+    ["Calle 48 Sur # 5-20 Este", "San Cristóbal"],
+    ["Calle 70 Sur # 30-10", "Ciudad Bolívar"],
+    ["Calle 85 # 50-20", "Barrios Unidos"],
+    ["Calle 240 # 15-10", "Usaquén"],
+  ])("da un horario de prueba a «%s» (%s)", (texto, zona) => {
+    const r = consultar(texto, LUNES_8AM);
+    expect(r.estado).toBe("con-ruta");
+    if (r.estado === "con-ruta") expect(r.zona.nombre).toBe(zona);
+  });
+
+  it("toda dirección dentro de la malla recibe horario, salvo el sector de demostración sin ruta", () => {
+    for (let calle = -100; calle <= 250; calle += 3)
+      for (let carrera = -20; carrera <= 160; carrera += 3) {
+        const r = consultarPunto({ tipo: "CALLE", viaPrincipal: Math.abs(calle), viaGeneradora: carrera, placa: 10, texto: "", punto: { calle, carrera } }, LUNES_8AM);
+        const demo = calle >= -43 && calle <= -42 && carrera >= 77 && carrera <= 79;
+        expect(r.estado, `${calle},${carrera}`).toBe(demo ? "sin-ruta" : "con-ruta");
+      }
   });
 
   it("reporta el error de formato", () => {

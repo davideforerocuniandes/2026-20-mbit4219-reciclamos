@@ -10,7 +10,7 @@
 | **Rendimiento** | Todas las páginas son estáticas. Sin backend ni llamadas de red para consultar. Íconos SVG importados uno a uno. Fuente con `next/font` y `display: swap`. | `next build` reporta las seis rutas como estáticas. |
 | **Mantenibilidad** | Dominio puro separado de la interfaz. Organización por funcionalidad. TypeScript estricto. Uniones discriminadas para los estados. | `npm run lint` y `npm run typecheck` en integración continua. |
 | **Seguridad** | Sin datos sensibles en el servidor. Cabeceras `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy` (ubicación solo en el propio sitio). Sin `X-Powered-By`. Dependencias de producción sin vulnerabilidades conocidas. | Prueba de cabeceras y `npm audit --omit=dev`. |
-| **Honestidad del dato** | Nunca muestra un horario que no puede verificar. Cada ruta muestra la fecha de su última validación en campo. Franja visible de «prototipo, datos ficticios» en todas las pantallas. | Pruebas de los estados «sin ruta» y «fuera de cobertura». |
+| **Honestidad del dato** | Nunca muestra un horario que no puede verificar. Cada ruta muestra la fecha de su última validación en campo. Franja visible de «prototipo, datos ficticios» en todas las pantallas. | Pruebas del estado «sin ruta» y de que toda dirección de la malla recibe resultado. |
 | **Portabilidad y despliegue** | Sin variables de entorno. Despliegue en Vercel sin configuración. Node fijado con `engines` y `.node-version`. | Integración continua con Node 24. |
 
 ## Riesgo conocido

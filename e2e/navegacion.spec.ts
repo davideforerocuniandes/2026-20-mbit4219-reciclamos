@@ -90,7 +90,7 @@ test("capturas de pantalla para revisión visual", async ({ page }, info) => {
     ["resultado-bosa", "Calle 65 Sur # 80-12"],
     ["resultado-kennedy", "Calle 10 Sur # 82-15"],
     ["resultado-sin-ruta", "Calle 42 Sur # 78-15"],
-    ["resultado-fuera", "Calle 30 # 2-10"],
+    ["resultado-usaquen", "Calle 120 # 7-30"],
     ["resultado-error", "mi casa"],
   ] as const) {
     await consultar(page, direccion);

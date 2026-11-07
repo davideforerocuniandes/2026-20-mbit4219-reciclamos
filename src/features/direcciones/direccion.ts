@@ -81,8 +81,12 @@ function normalizar(entrada: string): string {
 const NUM = String.raw`(\d{1,3})\s?([A-H])?(?:\s?(BIS))?(?:\s?([A-H])\b)?`;
 const CUADRANTE = String.raw`(SUR|ESTE|S|E)`;
 
+// Lo que venga después de la placa y empiece por letra (apartamento, torre, interior, barrio, «Bogotá»…) se ignora:
+// la gente copia la dirección completa del recibo y eso no cambia la cuadra.
+const COMPLEMENTO = String.raw`(?:\s+[A-Z].*)?`;
+
 const PATRON = new RegExp(
-  String.raw`^(.+?)\s+${NUM}(?:\s+${CUADRANTE})?\s*(?:#|\s)\s*${NUM}\s*(?:-|\s)\s*(\d{1,3})(?:\s+${CUADRANTE})?$`,
+  String.raw`^(.+?)\s+${NUM}(?:\s+${CUADRANTE})?\s*(?:#|\s)\s*${NUM}\s*(?:-|\s)\s*(\d{1,3})(?:\s+${CUADRANTE})?${COMPLEMENTO}$`,
 );
 
 function sufijo(letra?: string, bis?: string, letra2?: string): string {

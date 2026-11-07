@@ -1,13 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { BellRing, CalendarCheck, CircleCheck, MapPin, Truck, TriangleAlert } from "lucide-react";
 import { Boton, Etiqueta, Nota, Tarjeta } from "@/components/ui";
 import { useAlmacen } from "@/lib/almacen";
 import { PanelAviso } from "@/features/avisos/panel-aviso";
 import { almacenIntereses, quitarInteres, registrarInteres } from "@/features/avisos/avisos";
 import { PanelReporte } from "@/features/reportes/panel-reporte";
-import { ZONAS } from "@/features/territorio/zonas";
 import { RUTAS } from "./datos";
 import type { HorarioCamion } from "./datos";
 import type { ResultadoConsulta } from "./consulta";
@@ -21,7 +19,6 @@ export function Resultado({ resultado, ahora }: { resultado: ConDireccion; ahora
       <Ubicacion resultado={resultado} />
       {resultado.estado === "con-ruta" && <ConRuta resultado={resultado} ahora={ahora} />}
       {resultado.estado === "sin-ruta" && <SinRuta resultado={resultado} />}
-      {resultado.estado === "fuera-de-cobertura" && <FueraDeCobertura />}
     </div>
   );
 }
@@ -33,7 +30,7 @@ function Ubicacion({ resultado }: { resultado: ConDireccion }) {
         <MapPin aria-hidden className="size-4 text-verde-700" />
         {resultado.direccion.texto}
       </span>
-      {"zona" in resultado && <Etiqueta>{resultado.zona.nombre} (aprox.)</Etiqueta>}
+      <Etiqueta>{resultado.zona.nombre} (aprox.)</Etiqueta>
       <span className="w-full text-gris">Tu cuadra: {resultado.cuadra.descripcion}</span>
     </div>
   );
@@ -165,22 +162,5 @@ function SinRuta({ resultado }: { resultado: Extract<ConDireccion, { estado: "si
       </Nota>
       <Camion camion={resultado.camion} />
     </div>
-  );
-}
-
-function FueraDeCobertura() {
-  const pilotos = ZONAS.filter((z) => RUTAS.some((r) => r.zonaId === z.id)).map((z) => z.nombre);
-  return (
-    <section aria-labelledby="titulo-fuera" className="rounded-tarjeta bg-white p-6 shadow-tarjeta ring-1 ring-borde/60">
-      <h2 id="titulo-fuera" className="text-xl font-bold">
-        No podemos ubicar esa dirección en el prototipo
-      </h2>
-      <p className="mt-2 text-[0.95rem] text-gris">
-        El prototipo solo conoce algunas zonas de la ciudad. Las localidades con rutas de prueba son: {pilotos.join(", ")}.
-      </p>
-      <p className="mt-3 text-[0.95rem]">
-        Prueba con una de las direcciones de ejemplo o lee <Link href="/acerca" className="font-semibold text-verde-700 underline underline-offset-4">cómo funciona el prototipo</Link>.
-      </p>
-    </section>
   );
 }

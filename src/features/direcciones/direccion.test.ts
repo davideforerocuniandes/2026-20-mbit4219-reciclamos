@@ -24,6 +24,11 @@ describe("leerDireccion", () => {
     ["Calle 65A Bis Sur # 80B-12", { calle: -65, carrera: 80 }],
     ["Carrera 3 Este # 10-15", { calle: 10, carrera: -3 }],
     ["Cáĺle 70 № 100-20", { calle: 70, carrera: 100 }],
+    ["Calle 127 # 15-40 Apto 301", { calle: 127, carrera: 15 }],
+    ["Carrera 15 # 127-40 Torre 3 Apto 502", { calle: 127, carrera: 15 }],
+    ["Calle 26 # 68-35, Bogotá D.C.", { calle: 26, carrera: 68 }],
+    ["Calle 45 Sur # 78B-20 Sur Interior 2", { calle: -45, carrera: 78 }],
+    ["Calle 63 # 24-12 Santa Isabel", { calle: 63, carrera: 24 }],
   ])("ubica «%s»", (texto, esperado) => {
     expect(punto(texto)).toEqual(esperado);
   });
@@ -31,6 +36,11 @@ describe("leerDireccion", () => {
   it("normaliza el texto para mostrarlo", () => {
     const r = leerDireccion("cl 65a bis sur # 80b-12");
     expect(r.ok && r.direccion.texto).toBe("Calle 65A Bis Sur # 80B-12");
+  });
+
+  it("deja por fuera el apartamento y el resto del complemento", () => {
+    const r = leerDireccion("Calle 127 # 15-40 Apto 301");
+    expect(r.ok && r.direccion.texto).toBe("Calle 127 # 15-40");
   });
 
   it("rechaza la entrada vacía", () => {

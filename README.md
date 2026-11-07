@@ -15,7 +15,7 @@ Proyecto académico del curso **MBIT 4219 · Transformación Digital del Estado 
 | Pantalla | Qué resuelve |
 |---|---|
 | **Inicio** | La función vive como una tarjeta más de la SuperApp. Muestra el aviso activo, si existe. |
-| **Reciclaje** | Lee direcciones de Bogotá en cualquier formato habitual (`Cl 65 S 80 12`, `Carrera 80 # 65-12 Sur`, `Av Calle 26 # 85-10`, `Calle 65A Bis Sur # 80B-12`…), ubica la cuadra y muestra la próxima recolección, **todas** las organizaciones habilitadas que pasan por ella (las rutas no son exclusivas) y el horario del camión. Si no hay ruta, lo dice con honestidad y ofrece «Avísame cuando haya ruta». |
+| **Reciclaje** | Lee direcciones de Bogotá en cualquier formato habitual (`Cl 65 S 80 12`, `Carrera 80 # 65-12 Sur`, `Av Calle 26 # 85-10`, `Calle 65A Bis Sur # 80B-12`…), ubica la cuadra y muestra la próxima recolección (cualquier dirección urbana de Bogotá recibe un horario de prueba), **todas** las organizaciones habilitadas que pasan por ella (las rutas no son exclusivas) y el horario del camión. Si no hay ruta, lo dice con honestidad y ofrece «Avísame cuando haya ruta». |
 | **Aviso** | Notificación a las 9:00 p. m. del día anterior, con consentimiento explícito. Guarda **la cuadra, nunca la dirección**. Incluye una vista previa de la notificación. |
 | **¿No pasaron?** | Reporte de incidencia (no pasó, pasó el camión antes, otro) con número de seguimiento. Llega a la organización, separado de las PQR formales. |
 | **Mis avisos** | Aviso activo, cuadras en espera de ruta, estado de los reportes con la respuesta de la organización y «Borrar mis datos». |
@@ -32,8 +32,8 @@ Proyecto académico del curso **MBIT 4219 · Transformación Digital del Estado 
 | `Calle 145 # 91-19` | Suba |
 | `Calle 70 # 100-20` | Engativá, tres días por semana |
 | `Calle 42 Sur # 78-15` | Kennedy, sector sin ruta registrada |
-| `Calle 120 # 7-30` | Usaquén, localidad fuera del piloto |
-| `Calle 30 # 2-10` | Zona que el prototipo no conoce |
+| `Calle 120 # 7-30 Apto 301` | Usaquén; el apartamento y lo que siga a la placa se ignoran |
+| `Calle 30 # 2-10` | Entre dos zonas: toma la localidad más cercana |
 | `mi casa`, `Calle 500 # 1-1` | Errores de formato y de rango |
 
 ## Cómo correrlo

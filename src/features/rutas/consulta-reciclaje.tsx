@@ -139,7 +139,7 @@ export function ConsultaReciclaje({ direccionInicial }: { direccionInicial?: str
             </div>
           </div>
           <p id={`${id}-ayuda`} className="mt-2 text-sm text-gris">
-            Como aparece en el recibo de servicios.
+            Como aparece en el recibo de servicios. No la guardamos ni la enviamos a ningún lado.
             {vistaPrevia?.ok && vistaPrevia.direccion.texto !== texto.trim() && (
               <> Leemos: <strong className="text-tinta">{vistaPrevia.direccion.texto}</strong>.</>
             )}

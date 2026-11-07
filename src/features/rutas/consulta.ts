@@ -1,6 +1,6 @@
 import { cuadraDe, leerDireccion, type Cuadra, type Direccion, type ErrorDireccion, type PuntoMalla } from "@/features/direcciones/direccion";
-import { zonaDe, type Zona } from "@/features/territorio/zonas";
-import { HORARIOS_CAMION, RUTAS, organizacion, type HorarioCamion, type Organizacion, type Ruta } from "./datos";
+import { ubicarEnZona, type Zona } from "@/features/territorio/zonas";
+import { HORARIOS_CAMION, RUTAS, SECTORES_SIN_RUTA, organizacion, type HorarioCamion, type Organizacion, type Ruta } from "./datos";
 import { enBogota, instanteBogota, sumarDias, type FechaCivil } from "./tiempo";
 
 /** Hora a la que llega el aviso la noche anterior (21:00, hora de Bogotá). */
@@ -14,7 +14,6 @@ export interface RutaEnCuadra {
 
 export type ResultadoConsulta =
   | { estado: "error-direccion"; error: ErrorDireccion }
-  | { estado: "fuera-de-cobertura"; direccion: Direccion; cuadra: Cuadra }
   | { estado: "sin-ruta"; direccion: Direccion; cuadra: Cuadra; zona: Zona; camion?: HorarioCamion }
   | {
       estado: "con-ruta";
@@ -32,7 +31,14 @@ function cubre(ruta: Ruta, p: PuntoMalla): boolean {
   return p.calle >= calle[0] && p.calle <= calle[1] && p.carrera >= carrera[0] && p.carrera <= carrera[1];
 }
 
+function enSectorSinRuta(p: PuntoMalla): boolean {
+  return SECTORES_SIN_RUTA.some(
+    ({ calle, carrera }) => p.calle >= calle[0] && p.calle <= calle[1] && p.carrera >= carrera[0] && p.carrera <= carrera[1],
+  );
+}
+
 export function rutasEn(p: PuntoMalla): Ruta[] {
+  if (enSectorSinRuta(p)) return [];
   return RUTAS.filter((r) => cubre(r, p));
 }
 
@@ -77,10 +83,9 @@ function comparar(a: FechaCivil, b: FechaCivil): number {
 
 export function consultarPunto(direccion: Direccion, ahora: Date): ResultadoConsulta {
   const cuadra = cuadraDe(direccion);
-  const zona = zonaDe(direccion.punto);
-  if (!zona) return { estado: "fuera-de-cobertura", direccion, cuadra };
+  const { zona, punto } = ubicarEnZona(direccion.punto);
   const camion = HORARIOS_CAMION.find((c) => c.zonaId === zona.id);
-  const rutas = rutasEn(direccion.punto)
+  const rutas = rutasEn(punto)
     .map((ruta) => ({ ruta, organizacion: organizacion(ruta.organizacionId), proxima: proximaRecoleccion(ruta, ahora) }))
     .sort((a, b) => comparar(a.proxima, b.proxima) || a.ruta.ventana.desde - b.ruta.ventana.desde);
   if (rutas.length === 0) return { estado: "sin-ruta", direccion, cuadra, zona, camion };
