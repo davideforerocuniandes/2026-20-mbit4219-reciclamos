@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es-CO" className="antialiased">
-      <body className="font-sans">
+      <body className="font-sans wrap-anywhere">
         <MarcoApp>{children}</MarcoApp>
       </body>
     </html>
